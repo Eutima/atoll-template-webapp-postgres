@@ -32,8 +32,7 @@ RUN apt-get update \
 COPY requirements/ requirements/
 RUN pip install --no-cache-dir -r requirements/development.txt
 COPY . .
-COPY docker/run_worker.sh run_worker.sh
-RUN chmod +x docker/entrypoint.sh docker/run_worker.sh run_worker.sh
+RUN chmod +x docker/entrypoint.sh
 EXPOSE 8000
 ENTRYPOINT ["docker/entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
@@ -52,8 +51,7 @@ WORKDIR /app
 COPY --from=py-builder /root/.local /home/appuser/.local
 COPY --from=css-builder /build/static/css/dist ./static/css/dist
 COPY . .
-COPY docker/run_worker.sh run_worker.sh
-RUN chmod +x docker/entrypoint.sh docker/run_worker.sh run_worker.sh \
+RUN chmod +x docker/entrypoint.sh \
     && chown -R appuser:appuser /app
 USER appuser
 

@@ -20,13 +20,6 @@ DATABASES = {
     }
 }
 
-HUEY = {
-    "huey_class": "huey.SqliteHuey",
-    "name": "django_template_dev",
-    "filename": str(BASE_DIR / "huey.sqlite3"),
-    "immediate": False,
-}
-
 # Debug Toolbar is added ONLY in development settings, never conditionally in
 # base.py, so it structurally cannot leak into production even if DEBUG is
 # accidentally flipped to True there.

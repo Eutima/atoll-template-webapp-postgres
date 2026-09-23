@@ -29,12 +29,6 @@ python manage.py makemigrations authentication   # or whichever app
 python manage.py migrate
 ```
 
-Huey worker (separate terminal, required for background/periodic tasks to actually run):
-
-```bash
-python manage.py run_huey
-```
-
 Tailwind CSS (source `static/css/src/main.css` → compiled `static/css/dist/main.css`, which is gitignored):
 
 ```bash
@@ -45,8 +39,8 @@ npm run build:css   # one-off / before Docker build
 Docker:
 
 ```bash
-docker compose up --build                              # dev: web + huey, SQLite, no external services
-docker compose -f docker-compose.prod.yml up --build    # prod-like: web + huey + postgres + redis
+docker compose up --build                              # dev: web, SQLite, no external services
+docker compose -f docker-compose.prod.yml up --build    # prod-like: web + postgres
 docker compose -f docker-compose.prod.yml exec web python manage.py migrate
 ```
 
@@ -106,13 +100,9 @@ Despite "serializers" and "filters" in the naming, this project does **not** use
 
 ### Settings split and the dev/prod engine switch
 
-`config/settings/{base,development,production,test}.py`. The SQLite-vs-Postgres and `SqliteHuey`-vs-`RedisHuey` choice is hardcoded per settings file, not computed from `DEBUG` at runtime — `development.py` and `test.py` use SQLite + `SqliteHuey`, `production.py` requires `DB_*`/`REDIS_*` env vars and uses `RedisHuey`. Django Debug Toolbar is added to `INSTALLED_APPS`/`MIDDLEWARE` **only inside `development.py`**, never conditionally in `base.py` — this is deliberate so it structurally cannot leak into production regardless of `DEBUG`'s value there (`production.py` also has a defensive `assert "debug_toolbar" not in INSTALLED_APPS`).
+`config/settings/{base,development,production,test}.py`. The SQLite-vs-Postgres choice is hardcoded per settings file, not computed from `DEBUG` at runtime — `development.py` and `test.py` use SQLite, `production.py` requires `DB_*` env vars and uses Postgres. Django Debug Toolbar is added to `INSTALLED_APPS`/`MIDDLEWARE` **only inside `development.py`**, never conditionally in `base.py` — this is deliberate so it structurally cannot leak into production regardless of `DEBUG`'s value there (`production.py` also has a defensive `assert "debug_toolbar" not in INSTALLED_APPS`).
 
 Logging goes through `l4py` (`LogConfigBuilderDjango` in each settings file). `l4py` defaults to **also** writing a log file to the current working directory even when no `.file(...)` path is configured — `.file_enabled(False)` is set explicitly in `base.py`/`development.py` to keep logging console-only (containers log to stdout). Don't remove that call without deliberately wanting log files on disk. `apps/shared/middleware.py:LoggingContextMiddleware` sets `l4py`'s trace_id/user_id context vars per request, so every log line during a request carries them automatically.
-
-### Huey background jobs
-
-`apps/jobs/tasks/<name>.py` defines tasks with `@db_periodic_task`/`@db_task` from `huey.contrib.djhuey` (the `db_*` variants close stale DB connections after each run — use these, not the plain `task`/`periodic_task` decorators, for anything touching the ORM). Huey's Django integration does not reliably autodiscover task modules, so `apps/jobs/apps.py:JobsConfig.ready()` explicitly imports each task module to force registration — add new task modules to that import list. Tasks call a domain Service (see `heartbeat.py` calling `UserProfileService`), never the ORM directly.
 
 ### Frontend: django-cotton + htmx + Alpine.js, no build-time JS framework
 

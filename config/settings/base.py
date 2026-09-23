@@ -28,13 +28,11 @@ THIRD_PARTY_APPS = [
     "django_cotton",
     "django_htmx",
     "django_filters",
-    "huey.contrib.djhuey",
 ]
 
 LOCAL_APPS = [
     "apps.shared",
     "apps.authentication",
-    "apps.jobs",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

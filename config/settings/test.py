@@ -14,10 +14,4 @@ DATABASES = {
     }
 }
 
-HUEY = {
-    "huey_class": "huey.SqliteHuey",
-    "name": "django_template_test",
-    "immediate": True,
-}
-
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
